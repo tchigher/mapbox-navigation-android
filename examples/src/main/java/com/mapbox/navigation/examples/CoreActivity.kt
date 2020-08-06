@@ -22,6 +22,7 @@ import com.mapbox.navigation.examples.core.ReplayActivity
 import com.mapbox.navigation.examples.core.ReplayHistoryActivity
 import com.mapbox.navigation.examples.core.ReplayWaypointsActivity
 import com.mapbox.navigation.examples.core.SimpleMapboxNavigationKt
+import com.mapbox.navigation.examples.core.JunctionSnapshotActivity
 import com.mapbox.navigation.examples.core.SummaryBottomSheetActivity
 import kotlinx.android.synthetic.main.activity_core.*
 
@@ -56,6 +57,11 @@ class CoreActivity : AppCompatActivity() {
                 getString(R.string.title_guidance_view),
                 getString(R.string.description_guidance_view),
                 GuidanceViewActivity::class.java
+            ),
+            SampleItem(
+                getString(R.string.title_junction_snapshot_sample),
+                getString(R.string.description_junction_snapshot_sample),
+                JunctionSnapshotActivity::class.java
             ),
             SampleItem(
                 getString(R.string.title_reroute_view),
