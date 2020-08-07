@@ -37,4 +37,69 @@
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toBottomOf="@+id/junctionSpinner" />
 
+  <androidx.constraintlayout.widget.ConstraintLayout
+      android:id="@+id/settingsContainer"
+      android:background="@android:color/white"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent" >
+
+    <TextView
+        android:id="@+id/cameraOffsetLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Camera bottom offset(0..200)"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@id/cameraOffsetSb"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <androidx.appcompat.widget.AppCompatSeekBar
+        android:id="@+id/cameraOffsetSb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="200"
+        app:layout_constraintBottom_toTopOf="@id/tiltLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/tiltLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tilt level"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@id/tiltLevelSb"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <androidx.appcompat.widget.AppCompatSeekBar
+        android:id="@+id/tiltLevelSb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/zoomLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/zoomLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Zoom level"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@id/zoomLevelSb"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <androidx.appcompat.widget.AppCompatSeekBar
+        android:id="@+id/zoomLevelSb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+  </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

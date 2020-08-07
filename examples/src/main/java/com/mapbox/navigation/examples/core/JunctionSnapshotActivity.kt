@@ -1,17 +1,18 @@
 package com.mapbox.navigation.examples.core
 
-import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.camera.CameraPosition
+import com.mapbox.mapboxsdk.constants.MapboxConstants
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.Style
 import com.mapbox.mapboxsdk.snapshotter.MapSnapshotter
@@ -24,69 +25,24 @@ import com.mapbox.navigation.ui.internal.route.MapRouteLayerProvider
 import com.mapbox.navigation.ui.internal.route.RouteConstants
 import com.mapbox.turf.TurfClassification
 import com.mapbox.turf.TurfMeasurement
-import kotlinx.android.synthetic.main.activity_guidance_view.snapshotImage
 import kotlinx.android.synthetic.main.activity_junction_snapshot.*
 import timber.log.Timber
 
-@SuppressLint("LogNotTimber")
 class JunctionSnapshotActivity : AppCompatActivity() {
 
     private lateinit var mapboxMap: MapboxMap
     private val junctionsProvider = JunctionsProvider()
-    // private lateinit var junctionData: JunctionData
+    private var currentJunctionData: JunctionData? = null
 
-    // private lateinit var cameraPoint: Point
     private lateinit var cameraPosition: CameraPosition
-
-    private val pointOfCamera1 = Point.fromLngLat(-1.8611406499303198, 52.50886354508242)
-
-    private val cameraPosition1 = CameraPosition.Builder()
-        .target(pointOfCamera1.toLatLng())
-        .zoom(17.0)
-        // .bearing(304.0)
-        // .bearing(297.0)
-        .tilt(60.0)
-        .build()
-
-    // private lateinit var snapshotterOptions: MapSnapshotter.Options
-
-    private val options by lazy {
-        MapSnapshotter.Options(
-            mapView.measuredWidth,
-            mapView.measuredHeight
-        )
-            // .withPixelRatio(resources.displayMetrics.density)
-            .withPixelRatio(1.0f)
-            .withCameraPosition(cameraPosition1)
-            .withStyleBuilder(
-                Style.Builder()
-                    .fromUri(Style.MAPBOX_STREETS)
-                    .withSource(
-                        GeoJsonSource(
-                            RouteConstants.PRIMARY_ROUTE_SOURCE_ID,
-                            LineString.fromJson(
-                                junctionsProvider.listOfJunctions.first().readLineString()
-                            )
-                        )
-                    )
-                    .withLayers(
-                        mapRouteLayerProvider.initializePrimaryRouteLayer(
-                            mapboxMap.style,
-                            true,
-                            1.0f,
-                            Color.BLUE
-                        )
-                    )
-            )
-    }
-
-    // private val mapSnapshotter: MapSnapshotter by lazy {
-    //     MapSnapshotter(this, options)
-    // }
+    private var mapSnapshotter: MapSnapshotter? = null
 
     private val mapRouteLayerProvider = MapRouteLayerProvider()
 
     companion object {
+        private const val CAMERA_DEFAULT_TILT = MapboxConstants.MAXIMUM_TILT
+        private const val CAMERA_DEFAULT_ZOOM = 17.0
+        private const val POINT_ID = "point"
         const val TAG = "JunctionSnapshotActivity"
     }
 
@@ -97,63 +53,58 @@ class JunctionSnapshotActivity : AppCompatActivity() {
         mapView.getMapAsync { map ->
             mapboxMap = map
             mapboxMap.setStyle(Style.MAPBOX_STREETS) {
-                // mapboxMap.cameraPosition = cameraPosition1
-                // initSnapshotter()
-                // makeSnapshot()
                 initSpinner()
-            }
-            mapboxMap.addOnCameraMoveListener {
-                // Log.d(TAG, mapboxMap.cameraPosition.toString())
+                initSettingViews()
             }
         }
-
-        // options.withCameraPosition(CameraPosition.Builder(cameraPosition1).bearing(0.0).build())
-
-        // val geometryCoordinates = LineString.fromJson(
-        //     junctionsProvider.listOfJunctions.first().readLineString()
-        // )
-        //     .coordinates()
-        //
-        // val theNearest = geometryCoordinates.theNearestCoordinateTo(
-        //     junctionsProvider.listOfJunctions.first().junctionEntry
-        // )
-        // Toast.makeText(this, "The nearest point = $theNearest", Toast.LENGTH_LONG).show()
-        //
-        // val indexOfTheNearestCoordinate = geometryCoordinates.indexOf(theNearest)
-        //
-        // Toast.makeText(
-        //     this,
-        //     "The nearest point index = $indexOfTheNearestCoordinate, of size = ${geometryCoordinates.size}",
-        //     Toast.LENGTH_LONG
-        // ).show()
-        //
-        // val bearing = TurfMeasurement.bearing(
-        //     geometryCoordinates[indexOfTheNearestCoordinate],
-        //     geometryCoordinates[indexOfTheNearestCoordinate - 1]
-        // ) + 180.0
-        // Toast.makeText(this, "The bearing = $bearing", Toast.LENGTH_SHORT).show()
     }
 
-    private fun initSnapshotter() {
-        // mapSnapshotter.setObserver(object : MapSnapshotter.Observer {
-        //     override fun onStyleImageMissing(imageName: String?) {
-        //         Timber.d(
-        //             "MapSnapshotter.Observer onStyleImageMissing; $imageName"
-        //         )
-        //     }
-        //
-        //     override fun onDidFinishLoadingStyle() {
-        //         Timber.d(
-        //             "MapSnapshotter.Observer onDidFinishLoadingStyle"
-        //         )
-        //     }
-        // })
-    }
+    private fun initSettingViews() {
+        zoomLevelSb.max = MapboxConstants.MAXIMUM_ZOOM.toInt()
+        zoomLevelSb.progress = CAMERA_DEFAULT_ZOOM.toInt()
+        zoomLabel.text = "${zoomLabel.text}(0..${zoomLevelSb.max})"
+        zoomLevelSb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                cameraPosition = CameraPosition.Builder(cameraPosition)
+                    .zoom(progress.toDouble())
+                    .build()
+                currentJunctionData?.let { prepareAndMakeSnapshot(it) }
+            }
 
-    private fun makeSnapshot() {
-        // mapSnapshotter.start { snapshot ->
-        //     snapshotImage.setImageBitmap(snapshot.bitmap)
-        // }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        })
+
+        tiltLevelSb.max = MapboxConstants.MAXIMUM_TILT.toInt()
+        tiltLevelSb.progress = CAMERA_DEFAULT_TILT.toInt()
+        tiltLabel.text = "${tiltLabel.text}(0..${tiltLevelSb.max})"
+        tiltLevelSb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                cameraPosition = CameraPosition.Builder(cameraPosition)
+                    .tilt(progress.toDouble())
+                    // .padding(0.0, 0.0, 0.0, progress.toDouble())
+                    .build()
+                currentJunctionData?.let { prepareAndMakeSnapshot(it) }
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        })
+
+        cameraOffsetSb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                cameraPosition = CameraPosition.Builder(cameraPosition)
+                    .padding(0.0, 0.0, 0.0, progress.toDouble())
+                    .build()
+                currentJunctionData?.let { prepareAndMakeSnapshot(it) }
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        })
     }
 
     private fun initSpinner() {
@@ -202,6 +153,7 @@ class JunctionSnapshotActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         mapView.onStop()
+        mapSnapshotter?.cancel()
     }
 
     override fun onLowMemory() {
@@ -225,6 +177,8 @@ class JunctionSnapshotActivity : AppCompatActivity() {
                 Timber.w("Junction location name $itemName is not found")
                 return
             }
+        currentJunctionData = junctionData
+
         val geometryCoordinates = LineString.fromJson(
             junctionData.readLineString()
         ).coordinates()
@@ -266,9 +220,9 @@ class JunctionSnapshotActivity : AppCompatActivity() {
     private fun prepareCamera(target: Point, bearing: Double) {
         cameraPosition = CameraPosition.Builder()
             .target(target.toLatLng())
-            .zoom(17.0)
+            .zoom(CAMERA_DEFAULT_ZOOM)
             .bearing(bearing)
-            .tilt(60.0)
+            .tilt(CAMERA_DEFAULT_TILT)
             .build()
     }
 
@@ -281,13 +235,13 @@ class JunctionSnapshotActivity : AppCompatActivity() {
             mapView.measuredWidth,
             mapView.measuredHeight
         )
-            // .withPixelRatio(resources.displayMetrics.density)
-            .withPixelRatio(1.0f)
+            .withPixelRatio(resources.displayMetrics.density)
+            // .withPixelRatio(1.0f)
             .withCameraPosition(cameraPosition)
             .withStyleBuilder(
                 Style.Builder()
                     .fromUri(Style.MAPBOX_STREETS)
-                    .withSource(
+                    .withSources(
                         GeoJsonSource(
                             RouteConstants.PRIMARY_ROUTE_SOURCE_ID,
                             LineString.fromJson(junctionData.readLineString())
@@ -303,8 +257,9 @@ class JunctionSnapshotActivity : AppCompatActivity() {
                     )
             )
 
-        val mapSnapshotter = MapSnapshotter(this, options)
-        mapSnapshotter.setObserver(object : MapSnapshotter.Observer{
+        mapSnapshotter?.cancel()
+        mapSnapshotter = MapSnapshotter(this, options)
+        mapSnapshotter?.setObserver(object : MapSnapshotter.Observer {
             override fun onStyleImageMissing(imageName: String?) {
                 Timber.d("MapSnapshotter onStyleImageMissing, imageName: $imageName")
             }
@@ -313,13 +268,13 @@ class JunctionSnapshotActivity : AppCompatActivity() {
                 Timber.d("onDidFinishLoadingStyle")
             }
         })
-            Timber.d("MapSnapshotter is starting")
-            mapSnapshotter.start ({ snapshot ->
-                Timber.d("MapSnapshotter has finished successful")
-                snapshotImage.setImageBitmap(snapshot.bitmap)
-            }, { error ->
-                Timber.w("MapSnapshotter error: $error")
-            })
+        Timber.d("MapSnapshotter is starting")
+        mapSnapshotter?.start({ snapshot ->
+            Timber.d("MapSnapshotter has finished successful")
+            snapshotImage.setImageBitmap(snapshot.bitmap)
+        }, { error ->
+            Timber.w("MapSnapshotter error: $error")
+        })
     }
 
     private fun List<Point>.theNearestCoordinateTo(point: Point): Point {
