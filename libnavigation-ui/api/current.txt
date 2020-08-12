@@ -688,6 +688,8 @@ package com.mapbox.navigation.ui.voice {
 
   public enum SpeechPlayerState {
     enum_constant public static final com.mapbox.navigation.ui.voice.SpeechPlayerState IDLE;
+    enum_constant public static final com.mapbox.navigation.ui.voice.SpeechPlayerState OFFLINE_PLAYER_INITIALIZED;
+    enum_constant public static final com.mapbox.navigation.ui.voice.SpeechPlayerState OFFLINE_PLAYER_INITIALIZING;
     enum_constant public static final com.mapbox.navigation.ui.voice.SpeechPlayerState OFFLINE_PLAYING;
     enum_constant public static final com.mapbox.navigation.ui.voice.SpeechPlayerState ONLINE_PLAYING;
   }
